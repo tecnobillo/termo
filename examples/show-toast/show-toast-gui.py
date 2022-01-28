@@ -37,7 +37,7 @@ input_text.focus()
 
 
 def on_click(e):
-    termo.app.show_toast(input_text.value if input_text.value else input_text.placeholder)
+    termo.app.show_toast(input_text.value.strip() or input_text.placeholder)
     input_text.value = ''
     input_text.focus()
 
