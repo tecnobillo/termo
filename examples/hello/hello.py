@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import os; os.chdir(os.path.split(__file__)[0])
 import sys; sys.path.append('../../')
 
