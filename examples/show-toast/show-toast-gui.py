@@ -18,6 +18,7 @@ input {
     height: 25vh;
     text-align: center;
     margin-bottom: 10px;
+    background-color: white;
 }
 
 button {
