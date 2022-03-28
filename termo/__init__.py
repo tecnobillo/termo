@@ -28,6 +28,7 @@ TERMO_JS_PATH = os.path.join(PKG_WWW_DIR, 'termo.js')
 class Vars:
 	main_brython_script = None
 	obj = None
+	wb_name = None
 	wb_command = None
 
 
@@ -86,9 +87,12 @@ def app(mainfp, gui='index.py'):
 			def check_webbrowser_alive():
 				while True:
 					time.sleep(2)
-					command = f"pgrep -f '{Vars.wb_command}'"
-					r = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip().split('\n')
-					if len(r) <= 1:
+					command1 = f"pgrep -f '{Vars.wb_command}'"
+					command2 = f"pgrep -f '{Vars.wb_name}'"
+					r1 = subprocess.run(command1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip().split('\n')
+					r2 = subprocess.run(command2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip().split('\n')
+					r = [i for i in r1 if i in r2]
+					if not r:
 						os._exit(0)
 
 			threading.Thread(target=check_webbrowser_alive, daemon=True).start()
@@ -120,7 +124,7 @@ def open_browser_when_server_on(port):
 
 		sp = subprocess.run('xdg-settings get default-web-browser', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 		res = sp.stdout.decode('utf-8').strip()
-		wb = os.path.splitext(res)[0]
+		wb = Vars.wb_name = os.path.splitext(res)[0]
 
 		if wb == 'google-chrome' or 'chrome' in wb or 'chromium' in wb:
 			command = Vars.wb_command = f'{wb} --app="{host}"'
