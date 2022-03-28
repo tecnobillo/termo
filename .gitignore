@@ -1,4 +1,5 @@
 .*
+core
 __pycache__
 brython.js
 brython_stdlib.js

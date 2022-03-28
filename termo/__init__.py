@@ -6,6 +6,8 @@ import socket
 import random
 import mimetypes
 import threading
+import subprocess
+import webbrowser
 import http, http.server
 import urllib, urllib.request
 
@@ -26,6 +28,7 @@ TERMO_JS_PATH = os.path.join(PKG_WWW_DIR, 'termo.js')
 class Vars:
 	main_brython_script = None
 	obj = None
+	wb_command = None
 
 
 
@@ -68,7 +71,23 @@ def app(mainfp, gui='index.py'):
 			s.close()
 
 		threading.Thread(target=open_browser_when_server_on, args=[port], daemon=True).start()
-		threading.Thread(target=lambda:(input(f'\nApp running ({os.path.split(mainfp)[-1]}) -> [ENTER] to close it.\n\n'), print('- close the browser manually -\n'), os._exit(0)), daemon=True).start()
+
+		if (os.name == 'posix' and os.environ.get('PREFIX') and 'com.termux' in os.environ['PREFIX']) or os.name == 'nt':
+
+			threading.Thread(target=lambda:(input(f'\nApp running ({os.path.split(mainfp)[-1]}) -> [ENTER] to close it.\n\n'), print('- close the browser manually -\n'), os._exit(0)), daemon=True).start()
+		
+		elif os.name == 'posix':
+
+			def check_webbrowser_alive():
+				while True:
+					time.sleep(2)
+					command = f"pgrep -f '{Vars.wb_command}'"
+					r = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip().split('\n')
+					if len(r) <= 1:
+						os._exit(0)
+
+			threading.Thread(target=check_webbrowser_alive, daemon=True).start()
+		
 		run_server(port)
 
 
@@ -79,15 +98,55 @@ def app(mainfp, gui='index.py'):
 
 def open_browser_when_server_on(port):
 
+	host = f'http://localhost:{port}'
+
 	while True:
 		try:
-			urllib.request.urlopen(f'http://localhost:{port}')
+			urllib.request.urlopen(host)
 			break
 		except urllib.error.URLError:
 			time.sleep(0.1)
 	
-	os.system(f'am start -a android.intent.action.VIEW -d http://localhost:{port} > /dev/null') # f'termux-open-url http://localhost:{port}'
+	if os.name == 'posix' and os.environ.get('PREFIX') and 'com.termux' in os.environ['PREFIX']:
 
+		os.system(f'$(am start -a android.intent.action.VIEW -d {host} > /dev/null) || termux-open-url {host} || xdg-open {host}')
+
+	elif os.name == 'posix':
+
+		sp = subprocess.run('xdg-settings get default-web-browser', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+		res = sp.stdout.decode('utf-8').strip()
+		wb = os.path.splitext(res)[0]
+
+		if wb == 'google-chrome' or 'chrome' in wb or 'chromium' in wb:
+			command = Vars.wb_command = f'{wb} --app="{host}"'
+
+		elif wb == 'firefox':
+			command = Vars.wb_command = f'{wb} --new-window {host}'
+
+		else:
+			command = Vars.wb_command = f'{wb} {host}'
+
+		subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+	elif os.name == 'nt':
+
+		msedge_paths = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', 'C:/Program Files/Microsoft/Edge/Application/msedge.exe'
+		
+		command = None
+
+		for msedge_path in msedge_paths:
+			if os.path.exists(msedge_path):
+				command = f'"{msedge_path}" --app="{host}"'
+				break
+
+		if command:
+			subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+		else:
+			webbrowser.open(host)
+
+	else:
+		print('undefined os')
+		os._exit(0)
 
 
 
