@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os; os.chdir(os.path.split(__file__)[0])
+import os; os.chdir(os.path.split(__file__)[0] or '.')
 import sys; sys.path.append('../../')
 
 # The above is only necessary because termo is not in the python path
