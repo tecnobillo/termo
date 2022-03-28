@@ -49,8 +49,13 @@ def app(mainfp, gui='index.py'):
 
 		if pid.isdigit():
 			try:
-				os.kill(int(pid), 9)
+				if os.name == 'posix':
+					os.kill(int(pid), 9)
+				elif os.name == 'nt':
+					subprocess.run(f'taskkill /f /t /pid {pid}', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 			except ProcessLookupError:
+				pass
+			except OSError:
 				pass
 
 		os.remove(lastpid_fp)
