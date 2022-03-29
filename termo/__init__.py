@@ -77,16 +77,16 @@ def app(mainfp, gui='index.py'):
 
 		threading.Thread(target=open_browser_when_server_on, args=[port], daemon=True).start()
 
-		if (os.name == 'posix' and os.environ.get('PREFIX') and 'com.termux' in os.environ['PREFIX']) or (os.name == 'nt' and not Vars.wb_name):
+		if os.name == 'posix' and os.environ.get('PREFIX') and 'com.termux' in os.environ['PREFIX']:
 
 			threading.Thread(target=lambda:(input(f'\nApp running ({os.path.split(mainfp)[-1]}) -> [ENTER] to close it.\n\n'), print('- close the browser manually -\n'), os._exit(0)), daemon=True).start()
 		
-		elif os.name == 'posix' or (os.name == 'nt' and Vars.wb_name):
+		else:
 
 			def check_webbrowser_alive():
 				while True:
 					time.sleep(5)
-					command = f'pgrep -f {Vars.wb_name}'.split() if os.name == 'posix' else f'tasklist | findstr {Vars.wb_name}'
+					command = f'pgrep -f {Vars.wb_name}'.split() if os.name == 'posix' else ['cmd', '/c', f'tasklist | findstr {Vars.wb_name}']
 					r = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip()
 					if not r:
 						os._exit(0)
