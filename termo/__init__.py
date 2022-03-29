@@ -37,7 +37,7 @@ def app(mainfp, gui='index.py'):
 
 	Vars.main_brython_script = gui
 
-	cwd = os.path.split(mainfp)[0]
+	cwd = os.path.split(os.path.abspath(mainfp))[0]
 	if cwd: # cwd == '' si se ha ejecutado el script desde su propio directorio
 		os.chdir(cwd)
 

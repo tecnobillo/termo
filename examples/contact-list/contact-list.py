@@ -1,9 +1,13 @@
 #!/usr/bin/python3
 
-import os; os.chdir(os.path.split(__file__)[0] or '.')
-import sys; sys.path.append('../../')
+import sys, os
 
-# The above is only necessary because termo is not in the python path
+# Adding termo to the path >
+path = os.path.abspath(os.path.split(__file__)[0])
+for _ in range(2): path = os.path.split(path)[0]
+sys.path.append(path)
+# < Adding termo to the path
+
 # This app requires Termux:API and 'pkg install termux-api'
 # This app requires permission to read the contact list
 
