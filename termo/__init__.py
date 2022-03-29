@@ -32,8 +32,9 @@ class Vars:
 
 
 
-def app(mainfp, gui='index.py'):
+def app(mainfp, gui='index.py', webapp=False, port=None, title='Termo-App'):
 
+	Vars.app_title = title
 	Vars.main_brython_script = gui
 
 	cwd = os.path.split(os.path.abspath(mainfp))[0]
@@ -64,24 +65,28 @@ def app(mainfp, gui='index.py'):
 		f.write(str(os.getpid()))
 
 
+	r = 0
+	while r == 0:
+		_port = port or random.randrange(1024, 2**16)
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		r = s.connect_ex(('localhost', _port)) # 0 es que el puerto está siendo escuchado (se está utilizando)
+		s.close()
+
+	port = _port
+
+
 	def class_decorator(cls):
 		
 		Vars.obj = cls()
 
-		r = 0
-		while r == 0:
-			port = random.randrange(1024, 2**16)
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			r = s.connect_ex(('localhost', port)) # 0 es que el puerto está siendo escuchado (se está utilizando)
-			s.close()
-
-		threading.Thread(target=open_browser_when_server_on, args=[port], daemon=True).start()
+		if not webapp:
+			threading.Thread(target=open_browser_when_server_on, args=[port], daemon=True).start()
 
 		if os.name == 'posix' and os.environ.get('PREFIX') and 'com.termux' in os.environ['PREFIX']:
 
 			threading.Thread(target=lambda:(input(f'\nApp running ({os.path.split(mainfp)[-1]}) -> [ENTER] to close it.\n\n'), print('- close the browser manually -\n'), os._exit(0)), daemon=True).start()
 		
-		else:
+		elif not webapp:
 
 			def check_webbrowser_alive():
 				while True:
@@ -93,7 +98,7 @@ def app(mainfp, gui='index.py'):
 
 			threading.Thread(target=check_webbrowser_alive, daemon=True).start()
 		
-		run_server(port)
+		run_server('0.0.0.0' if webapp else 'localhost', port)
 
 
 	return class_decorator
@@ -162,8 +167,8 @@ def open_browser_when_server_on(port):
 
 
 
-def run_server(port):
-	with http.server.HTTPServer(('localhost', port), Server) as httpd:
+def run_server(host, port):
+	with http.server.HTTPServer((host, port), Server) as httpd:
 		httpd.serve_forever()
 
 
@@ -190,7 +195,7 @@ class Server(http.server.SimpleHTTPRequestHandler):
 		if self.path == '/':
 
 			with open(HTML_TEMPLATE_PATH, 'r') as f:
-				data = f.read().format(main_brython_script=Vars.main_brython_script).encode('utf-8')
+				data = f.read().format(app_title=Vars.app_title, main_brython_script=Vars.main_brython_script).encode('utf-8')
 
 			self.send_response(200)
 			self.send_header('content-type', 'text/html')
