@@ -29,7 +29,6 @@ class Vars:
 	main_brython_script = None
 	obj = None
 	wb_name = None
-	wb_command = None
 
 
 
@@ -78,20 +77,17 @@ def app(mainfp, gui='index.py'):
 
 		threading.Thread(target=open_browser_when_server_on, args=[port], daemon=True).start()
 
-		if (os.name == 'posix' and os.environ.get('PREFIX') and 'com.termux' in os.environ['PREFIX']) or os.name == 'nt':
+		if (os.name == 'posix' and os.environ.get('PREFIX') and 'com.termux' in os.environ['PREFIX']) or (os.name == 'nt' and not Vars.wb_name):
 
 			threading.Thread(target=lambda:(input(f'\nApp running ({os.path.split(mainfp)[-1]}) -> [ENTER] to close it.\n\n'), print('- close the browser manually -\n'), os._exit(0)), daemon=True).start()
 		
-		elif os.name == 'posix':
+		elif os.name == 'posix' or (os.name == 'nt' and Vars.wb_name):
 
 			def check_webbrowser_alive():
 				while True:
-					time.sleep(2)
-					command1 = f"pgrep -f '{Vars.wb_command}'"
-					command2 = f"pgrep -f '{Vars.wb_name}'"
-					r1 = subprocess.run(command1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip().split('\n')
-					r2 = subprocess.run(command2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip().split('\n')
-					r = [i for i in r1 if i in r2]
+					time.sleep(5)
+					command = f'pgrep -f {Vars.wb_name}'.split() if os.name == 'posix' else f'tasklist | findstr {Vars.wb_name}'
+					r = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip()
 					if not r:
 						os._exit(0)
 
@@ -127,13 +123,13 @@ def open_browser_when_server_on(port):
 		wb = Vars.wb_name = os.path.splitext(res)[0]
 
 		if wb == 'google-chrome' or 'chrome' in wb or 'chromium' in wb:
-			command = Vars.wb_command = f'{wb} --app="{host}"'
+			command = f'{wb} --app="{host}"'
 
 		elif wb == 'firefox':
-			command = Vars.wb_command = f'{wb} --new-window {host}'
+			command = f'{wb} --new-window {host}'
 
 		else:
-			command = Vars.wb_command = f'{wb} {host}'
+			command = f'{wb} {host}'
 
 		subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -146,7 +142,14 @@ def open_browser_when_server_on(port):
 		for msedge_path in msedge_paths:
 			if os.path.exists(msedge_path):
 				command = f'"{msedge_path}" --app="{host}"'
+				Vars.wb_name = os.path.split(msedge_path)[-1]
 				break
+
+		if not command:
+			r = subprocess.run('reg QUERY HKEY_CLASSES_ROOT\htmlfile\shell\open\command /ve', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode('utf-8').strip()
+			wb_path = r[r.find('"')+1:r.rfind('"')]
+			command = f'"{wb_path}" {host}'
+			Vars.wb_name = os.path.split(wb_path)[-1]
 
 		if command:
 			subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
