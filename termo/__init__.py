@@ -29,12 +29,15 @@ class Vars:
 	main_brython_script = None
 	obj = None
 	wb_name = None
+	app_title = None
+	app_icon = None
 
 
 
-def app(mainfp, gui='index.py', webapp=False, port=None, title='Termo-App'):
+def app(mainfp, gui='index.py', webapp=False, port=None, title='Termo-App', icon=None):
 
 	Vars.app_title = title
+	Vars.app_icon = icon
 	Vars.main_brython_script = gui
 
 	cwd = os.path.split(os.path.abspath(mainfp))[0]
@@ -307,6 +310,18 @@ class Server(http.server.SimpleHTTPRequestHandler):
 
 			self.send_response(200)
 			self.send_header('content-type', 'text/javascript')
+			self.send_header('content-length', len(data))
+			self.end_headers()
+			self.wfile.write(data)
+			return	
+
+		elif self.path == '/favicon.ico' and Vars.app_icon:
+
+			with open(Vars.app_icon, 'rb') as f:
+				data = f.read()
+
+			self.send_response(200)
+			self.send_header('content-type', 'image/x-icon')
 			self.send_header('content-length', len(data))
 			self.end_headers()
 			self.wfile.write(data)
