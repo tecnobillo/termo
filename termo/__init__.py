@@ -31,14 +31,26 @@ class Vars:
 	wb_name = None
 	app_title = None
 	app_icon = None
+	brython_conf = None
 
 
 
-def app(mainfp, gui='index.py', webapp=False, port=None, title='Termo-App', icon=None):
+def app(mainfp, gui='index.py', webapp=False, port=None, title='Termo-App', icon=None, brython_conf=dict(cdn=False, stdlib=True)):
 
 	Vars.app_title = title
 	Vars.app_icon = icon
 	Vars.main_brython_script = gui
+
+	Vars.brython_conf = ''
+
+	if brython_conf['cdn'] == True:
+		Vars.brython_conf += f'<script type="text/javascript" src="{BRYTHON_JS_URL}"></script>'
+		if brython_conf['stdlib'] == True:
+			Vars.brython_conf += f'<script type="text/javascript" src="{BRYTHON_STDLIB_JS_URL}"></script>'
+	elif brython_conf['cdn'] == False:
+		Vars.brython_conf += f'<script type="text/javascript" src="/brython.js"></script>'
+		if brython_conf['stdlib'] == True:
+			Vars.brython_conf += f'<script type="text/javascript" src="/brython_stdlib.js"></script>'
 
 	cwd = os.path.split(os.path.abspath(mainfp))[0]
 	if cwd: # cwd == '' si se ha ejecutado el script desde su propio directorio
@@ -198,7 +210,7 @@ class Server(http.server.SimpleHTTPRequestHandler):
 		if self.path == '/':
 
 			with open(HTML_TEMPLATE_PATH, 'r') as f:
-				data = f.read().format(app_title=Vars.app_title, main_brython_script=Vars.main_brython_script).encode('utf-8')
+				data = f.read().format(app_title=Vars.app_title, brython_conf=Vars.brython_conf, main_brython_script=Vars.main_brython_script).encode('utf-8')
 
 			self.send_response(200)
 			self.send_header('content-type', 'text/html')
