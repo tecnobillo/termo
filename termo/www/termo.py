@@ -48,13 +48,13 @@ class TermoApp:
         rtype = xhr.getResponseHeader('termo-response-type')
 
         if rtype == 'str':
-            r = xhr.response
+            r = window.JSON.parse(xhr.response).string
 
         elif rtype == 'bytes':
             r = window._termojs.str2buff(xhr.response)
 
         else:
-            r = eval(xhr.response)
+            r = eval(window.JSON.parse(xhr.response).string)
 
         return r
 

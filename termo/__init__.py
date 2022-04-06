@@ -2,6 +2,7 @@ import os
 import cgi
 import ast
 import time
+import json
 import socket
 import random
 import mimetypes
@@ -406,9 +407,9 @@ class Server(http.server.SimpleHTTPRequestHandler):
 		rtype = r.__class__.__name__
 
 		if isinstance(r, str):
-			r = r.encode('utf-8')
+			r = json.dumps(dict(string=r)).encode('utf-8')
 		elif not isinstance(r, bytes):
-			r = repr(r).encode('utf-8')
+			r = json.dumps(dict(string=repr(r))).encode('utf-8')
 
 		self.send_response(200)
 		self.send_header('content-type', 'application/octect-stream')
