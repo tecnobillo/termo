@@ -1,12 +1,4 @@
-import sys
 from browser import window
-
-
-class Err:
-    def write(self, err):
-        window.alert(err)
-
-sys.stderr = Err()
 
 
 
