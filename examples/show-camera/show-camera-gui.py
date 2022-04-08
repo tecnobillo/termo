@@ -40,34 +40,26 @@ document <= img
 
 
 
-camera = 0
 
-def switch_camera(e):
+class Camera:
+	
+	def __init__(self):
+		self.n = 0
+		document.bind('click', self.switch)
 
-	global camera
-
-	if camera == 0:
-		camera = 1
-	elif camera == 1:
-		camera = 0
-
-
-document.bind('click', switch_camera)
+	def switch(self):
+		self.n = 1 if self.n == 0 else 0
 
 
 
-c = 0
+camera = Camera()
+
 
 def main():
 
-	global c
-
-	if c == termo.app.get_c():
-
-		photo = termo.app.take_photo(camera)
-		url = termo.utils.url(termo.utils.blob(photo))
-		img.src = url
-		c += 1
+	photo = termo.app.take_photo(camera.n)
+	url = termo.utils.url(termo.utils.blob(photo))
+	img.src = url
 
 	window.setTimeout(main, 100)
 

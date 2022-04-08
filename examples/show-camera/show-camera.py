@@ -14,11 +14,6 @@ import termo
 @termo.app(__file__, gui='show-camera-gui.py', brython_conf=dict(cdn=True, stdlib=True))
 class App:
 
-    c = 0
-
-    def get_c(self):
-        return self.c
-
     def take_photo(self, camera):
 
         temp_file = 'temp.jpg'
@@ -29,7 +24,5 @@ class App:
             data = f.read()
 
         os.remove(temp_file)
-
-        self.c += 1
 
         return data
