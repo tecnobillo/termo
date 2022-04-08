@@ -47,7 +47,7 @@ class Camera:
 		self.n = 0
 		document.bind('click', self.switch)
 
-	def switch(self):
+	def switch(self, e):
 		self.n = 1 if self.n == 0 else 0
 
 
